@@ -19,7 +19,7 @@ def custom_to_pil(x):
     x = x.permute(1, 2, 0).numpy()
     x = (255 * x).astype(np.uint8)
     x = Image.fromarray(x)
-    if not x.mode == "RGB":
+    if x.mode != "RGB":
         x = x.convert("RGB")
     return x
 
@@ -34,7 +34,7 @@ def custom_to_np(x):
 
 
 def logs2pil(logs, keys=["sample"]):
-    imgs = dict()
+    imgs = {}
     for k in logs:
         try:
             if len(logs[k].shape) == 4:
@@ -79,8 +79,6 @@ def convsample_ddim(model, steps, shape, eta=1.0
 def make_convolutional_sample(model, batch_size, vanilla=False, custom_steps=None, eta=1.0,):
 
 
-    log = dict()
-
     shape = [batch_size,
              model.model.diffusion_model.in_channels,
              model.model.diffusion_model.image_size,
@@ -99,9 +97,11 @@ def make_convolutional_sample(model, batch_size, vanilla=False, custom_steps=Non
 
     x_sample = model.decode_first_stage(sample)
 
-    log["sample"] = x_sample
-    log["time"] = t1 - t0
-    log['throughput'] = sample.shape[0] / (t1 - t0)
+    log = {
+        "sample": x_sample,
+        "time": t1 - t0,
+        'throughput': sample.shape[0] / (t1 - t0),
+    }
     print(f'Throughput for this batch: {log["throughput"]}')
     return log
 
@@ -249,7 +249,7 @@ if __name__ == "__main__":
     ckpt = None
 
     if not os.path.exists(opt.resume):
-        raise ValueError("Cannot find {}".format(opt.resume))
+        raise ValueError(f"Cannot find {opt.resume}")
     if os.path.isfile(opt.resume):
         # paths = opt.resume.split("/")
         try:
